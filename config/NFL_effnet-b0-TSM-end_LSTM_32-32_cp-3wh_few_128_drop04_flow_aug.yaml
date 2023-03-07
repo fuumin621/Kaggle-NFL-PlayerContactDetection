@@ -1,0 +1,15 @@
+seed: 42
+img_size: 128
+num_channels: 32
+step_train: 32
+step_pred: 8
+epochs: 12
+train_bs: 14
+valid_bs: 14
+lr: 0.0002
+weight_decay: 0.000001
+num_workers: 16
+n_fold: 5
+backbone: "effnet-b0"
+feature_drop_out: 0.5
+frame_drop_out: 0.4

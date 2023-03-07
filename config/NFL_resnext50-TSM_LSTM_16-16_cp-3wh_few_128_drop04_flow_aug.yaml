@@ -1,0 +1,15 @@
+seed: 42
+img_size: 128
+num_channels: 16
+step_train: 16
+step_pred: 4
+epochs: 15
+train_bs: 24
+valid_bs: 32
+lr: 0.0001
+weight_decay: 0.000001
+num_workers: 16
+n_fold: 5
+backbone: "resnext50"
+feature_drop_out: 0.2
+frame_drop_out: 0.4
