@@ -17,7 +17,7 @@ if DEBUG:
     CFG["train_bs"] = 4
     CFG["valid_bs"] = 4
 # %%
-save_dir = "./../models/" + exp_id.split(".")[0]
+save_dir = "./../model/" + exp_id.split(".")[0]
 os.makedirs(save_dir, exist_ok=True)
 save_dir
 
