@@ -1,7 +1,9 @@
 #%%
-import os
-import yaml
 import argparse
+import os
+
+import yaml
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--config_path" , type=str, required=True)
 parser.add_argument("--debug" , type=bool, required=False,default=False)
@@ -21,49 +23,47 @@ save_dir = "./../model/" + exp_id.split(".")[0]
 os.makedirs(save_dir, exist_ok=True)
 save_dir
 
+import copy
+import gc
+import glob
+import math
 # %%
 import os
+import pickle
+import random
 import sys
-import glob
+import time
+import warnings
+from collections import defaultdict
+from functools import lru_cache
+
+import albumentations as A
+import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import random
-import copy
-import pickle
-import math
-import gc
-import cv2
-import torch
-import time
 import timm
-from timm.models.resnet import Bottleneck
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
-import albumentations as A
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-from collections import defaultdict
-from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
-from functools import lru_cache
+import torch.utils.model_zoo as model_zoo
+from albumentations.pytorch import ToTensorV2
+from numba import jit
+from sklearn.metrics import matthews_corrcoef
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
+from timm.models.resnet import Bottleneck
 from torch import nn
+from torch.cuda.amp import GradScaler, autocast
 from torch.nn import functional as F
 from torch.optim import lr_scheduler
-from torch.utils.data import Dataset, DataLoader
-from torch.cuda.amp import autocast, GradScaler
-from albumentations.pytorch import ToTensorV2
-
-from sklearn.metrics import matthews_corrcoef
-
-from turbojpeg import (
-    TurboJPEG,
-    TJPF_GRAY,
-    TJSAMP_GRAY,
-    TJFLAG_PROGRESSIVE,
-    TJFLAG_FASTUPSAMPLE,
-    TJFLAG_FASTDCT,
-)
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
+from turbojpeg import (TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE, TJFLAG_PROGRESSIVE,
+                       TJPF_GRAY, TJSAMP_GRAY, TurboJPEG)
 
 import wandb
-import warnings
+
 warnings.filterwarnings("ignore")
 jpeg = TurboJPEG()
 
@@ -303,8 +303,7 @@ for i in range(side_img.shape[0]):
 # %%
 
 # %%
-import torch
-import torch.nn.functional as F
+
 
 class TemporalShift(nn.Module):
     def __init__(self, n_segment=3, n_div=8, inplace=False):
@@ -339,8 +338,6 @@ class TemporalShift(nn.Module):
             out[:, :, 2 * fold:] = x[:, :, 2 * fold:]  # not shift
 
         return out.view(nt, c, h, w)
-import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -672,7 +669,8 @@ out = model(x1, x2, y)
 print(out.shape)
 
 # %%
-from numba import jit
+
+
 
 @jit
 def mcc(tp, tn, fp, fn):

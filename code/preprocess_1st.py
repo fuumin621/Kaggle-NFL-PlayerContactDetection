@@ -1,33 +1,33 @@
 # %%
-import os
-import sys
-import glob
-import numpy as np
-import pandas as pd
-import random
-import pickle
-import math
 import gc
-import cv2
-from tqdm import tqdm
+import glob
+import math
+import os
+import pickle
+import random
+import sys
 import time
-from sklearn.model_selection import StratifiedGroupKFold, GroupKFold
 from functools import lru_cache
-import torch
-from torch import nn
-from torch.nn import functional as F
-import torch.optim as optim
-from torch.optim import lr_scheduler
-from torch.utils.data import Dataset, DataLoader
-from torch.cuda.amp import autocast, GradScaler
-import timm
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-import matplotlib.pyplot as plt
-from sklearn.metrics import matthews_corrcoef
-from tqdm import tqdm
 from multiprocessing import Pool
 
+import albumentations as A
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import timm
+import torch
+import torch.optim as optim
+from albumentations.pytorch import ToTensorV2
+from sklearn.metrics import matthews_corrcoef
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
+from sklearn.preprocessing import StandardScaler
+from torch import nn
+from torch.cuda.amp import GradScaler, autocast
+from torch.nn import functional as F
+from torch.optim import lr_scheduler
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 
 # %%
 input_path = "./../data/"
@@ -151,7 +151,7 @@ train["distance"] = train["distance"].fillna(-1)
 train_filtered = train.query('not distance>2').reset_index(drop=True)
 
 # %%
-from sklearn.preprocessing import StandardScaler
+
 
 scale_cols = [
 'x_position_1',
@@ -176,7 +176,6 @@ scale_cols = [
 scaler = StandardScaler()
 scaler.fit(train_filtered[scale_cols])
 # %%
-import pickle
 with open(input_path + "standard_scaler_dist2.pkl", "wb") as tf:
     scaler = pickle.dump(scaler, tf)
 
