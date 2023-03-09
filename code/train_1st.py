@@ -1,34 +1,10 @@
-#%%
-import argparse
 import os
-
 import yaml
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--config_path" , type=str, required=True)
-parser.add_argument("--debug" , type=bool, required=False,default=False)
-config_path = parser.parse_args().config_path
-DEBUG = parser.parse_args().debug
-with open(config_path, 'r') as f:
-    CFG = yaml.safe_load(f)
-
-# %%
-exp_id =  config_path.split("/")[-1].split(".")[0]
-if DEBUG:
-    exp_id = "debug_" +exp_id
-    CFG["train_bs"] = 4
-    CFG["valid_bs"] = 4
-# %%
-save_dir = "./../model/" + exp_id.split(".")[0]
-os.makedirs(save_dir, exist_ok=True)
-save_dir
-
+import argparse
 import copy
 import gc
 import glob
 import math
-# %%
-import os
 import pickle
 import random
 import sys
@@ -61,13 +37,34 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from turbojpeg import (TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE, TJFLAG_PROGRESSIVE,
                        TJPF_GRAY, TJSAMP_GRAY, TurboJPEG)
-
 import wandb
 
 warnings.filterwarnings("ignore")
-jpeg = TurboJPEG()
 
-# %%
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_path" , type=str, required=True)
+    parser.add_argument("--debug" , type=bool, required=False,default=False)
+    return parser.parse_args()
+
+args = parse_args()
+DEBUG = args.debug
+with open(args.config_path, 'r') as f:
+    CFG = yaml.safe_load(f)
+exp_id = args.config_path.split("/")[-1].split(".")[0]
+
+if DEBUG:
+    exp_id = "debug_" +exp_id
+    CFG["train_bs"] = 4
+    CFG["valid_bs"] = 4
+    CFG["n_fold"] = 1
+    CFG['epochs'] = 1
+
+input_path = "./../data/"
+frame_path = "./../data/frames/train/"
+save_dir = "./../model/" + exp_id.split(".")[0]
+os.makedirs(save_dir, exist_ok=True)
+
 def seed_everything(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -78,10 +75,6 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-seed_everything(CFG['seed'])
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# %%
 train_aug = A.Compose([
     A.HorizontalFlip(p=0.5),
     A.ShiftScaleRotate(p=0.5),
@@ -100,7 +93,6 @@ valid_aug = A.Compose([
     ToTensorV2()
 ])
 
-# %%
 feature_cols = [
     'distance',
     'distance_1',
@@ -114,20 +106,10 @@ feature_cols = [
     'G_flug',
 ]
 
-input_path = "./../data/"
-frame_path = "./../data/frames/train/"
+jpeg = TurboJPEG()
+seed_everything(CFG['seed'])
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# %%
-with open(input_path + "video2helmets.pkl", "rb") as tf:
-    video2helmets = pickle.load(tf)
-    
-with open(input_path + "video2frames.pkl", "rb") as tf:
-    video2frames = pickle.load(tf)
-    
-with open(input_path + f"train_{CFG['num_channels']}-{CFG['step_train']}_dist2_std_sg5folds.pkl", "rb") as tf:
-    train_list = pickle.load(tf)
-
-# %%
 class NFLDataset(Dataset):
     def __init__(self, data, aug=valid_aug, mode='train'):
         self.data = data
@@ -275,35 +257,6 @@ class NFLDataset(Dataset):
         side_img       = torch.concat([side_data["image"].view(-1,2,CFG["img_size"],CFG["img_size"]), side_data["mask"].permute(2,0,1).view(-1,2,CFG["img_size"],CFG["img_size"])[:,1,:,:].unsqueeze(1)],dim=1)
 
         return end_img, side_img, feature, label, mask, contact_ids, padding_mask
-
-# %%
-end_img, side_img, feature, label, mask, contact_ids, padding_mask = NFLDataset(train_list[0], train_aug, 'train')[2]
-
-plt.figure(figsize=(16,16))
-
-for i in range(end_img.shape[0]):
-    plt.subplot(CFG["num_channels"]//4,min(10,CFG["num_channels"]),2*i+1)
-    plt.imshow(end_img[:, :1, :, :].permute(0,2,3,1)[i,:,:,:])
-    plt.subplot(CFG["num_channels"]//4,min(10,CFG["num_channels"]),2*i+2)
-    plt.imshow(end_img[:, 2, :, :].squeeze(1).permute(1,2,0)[:,:,i])
-    plt.axis('off')
-    plt.subplots_adjust(wspace=None, hspace=None)
-
-# %%
-plt.figure(figsize=(16,16))
-
-for i in range(side_img.shape[0]):
-    plt.subplot(CFG["num_channels"]//4,min(10,CFG["num_channels"]),2*i+1)
-    plt.imshow(side_img[:, :1, :, :].permute(0,2,3,1)[i,:,:,:])
-    plt.subplot(CFG["num_channels"]//4,min(10,CFG["num_channels"]),2*i+2)
-    plt.imshow(side_img[:, 2, :, :].squeeze(1).permute(1,2,0)[:,:,i])
-    plt.axis('off')
-    plt.subplots_adjust(wspace=None, hspace=None)
-
-# %%
-
-# %%
-
 
 class TemporalShift(nn.Module):
     def __init__(self, n_segment=3, n_div=8, inplace=False):
@@ -660,18 +613,6 @@ class NFLModel(nn.Module):
         
         return y
 
-# %%
-model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"])
-x1  = torch.randn(4,CFG["num_channels"], 3,128,128)
-x2  = torch.randn(4,CFG["num_channels"], 3,128,128)
-y   = torch.randn(4, CFG["num_channels"], len(feature_cols))
-out = model(x1, x2, y)
-print(out.shape)
-
-# %%
-
-
-
 @jit
 def mcc(tp, tn, fp, fn):
     sup = tp * tn - fp * fn
@@ -725,11 +666,11 @@ def eval_mcc(y_true, y_prob, show=False):
     else:
         return best_mcc
 
-# %%
+
 def criterion(y_pred, y_true):
     return nn.BCEWithLogitsLoss()(y_pred, y_true)
 
-# %%
+
 def train_one_epoch(model, optimizer, scheduler, dataloader, epoch):
     global best_loss
     global best_mcc
@@ -824,7 +765,7 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, epoch):
     
     return epoch_loss, current_lr
 
-# %%
+
 @torch.no_grad()
 def valid_one_epoch(model, dataloader, show=False):    
     model.eval()
@@ -898,7 +839,6 @@ def valid_one_epoch(model, dataloader, show=False):
     
     return epoch_loss, mcc
 
-# %%
 def prepare_loaders(fold, debug=False):
     train_data = []
     valid_data = []
@@ -915,64 +855,8 @@ def prepare_loaders(fold, debug=False):
     valid_loader = DataLoader(valid_dataset, batch_size=CFG['valid_bs'], shuffle=False, num_workers=CFG['num_workers'])#, pin_memory=True)
     
     return train_loader, valid_loader
-# %%
-if DEBUG:
-    CFG["n_fold"] = 1
-    CFG['epochs'] = 1
-    for fold in range(5):
-        train_list[fold] = train_list[fold][:100]
 
-# %%
-best_loss_list = []
-best_mcc_list = []
 
-for fold in range(CFG["n_fold"]):
-    
-    print(f'num_worker = {CFG["num_workers"]}')
-    
-    print(f'#'*15)
-    print(f'### Fold: {fold}')
-    print(f'#'*15)
-    
-    best_loss = np.inf
-    best_mcc = -np.inf
-    
-    seed_everything(CFG['seed'])
-    
-    with wandb.init(project='NFL-contact', group=f'{exp_id.split(".")[0]}', name=f'fold{fold}') as run:
-
-        train_loader, valid_loader = prepare_loaders(fold)
-
-        model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
-
-        optimizer = optim.Adam(model.parameters(), lr=CFG["lr"], weight_decay=CFG["weight_decay"])
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer,T_max=len(train_loader)*CFG["epochs"], eta_min=1e-6)
-
-        for epoch in range(1, CFG["epochs"] + 1):
-            print()
-            print(f"Epoch {epoch}")
-            train_one_epoch(model, optimizer, scheduler, dataloader=train_loader, epoch=epoch)
-            
-        best_loss_list.append(best_loss)
-        best_mcc_list.append(best_mcc)
-
-best_loss = np.array(best_loss_list)
-best_mcc = np.array(best_mcc_list)
-
-print(best_loss_list)
-print(best_mcc_list)
-print(f"mcc : {np.mean(best_mcc)}")
-print(f"loss : {np.mean(best_loss)}")
-
-# %%
-with open(input_path + f"train_{CFG['num_channels']}-{CFG['step_pred']}_dist2_std_sg5folds.pkl", "rb") as tf:
-    train_list = pickle.load(tf)
-
-if DEBUG:
-    for fold in range(5):
-        train_list[fold] = train_list[fold][:100]
-
-# %%
 @torch.no_grad()
 def feature_extract(model, train_loader, valid_loader):
     
@@ -1060,28 +944,84 @@ def feature_extract(model, train_loader, valid_loader):
     return train_df, valid_df
 
 
-# %%
-for fold in range(CFG["n_fold"]):
-    print(f'#'*15)
-    print(f'### Fold: {fold}')
-    print(f'#'*15)
-    
-    train_loader, valid_loader = prepare_loaders(fold)
 
-    model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
-    
-    _model_path = os.path.join(save_dir, f"best_mcc-{fold:02d}.bin")
-    print(_model_path)
-    
-    model.load_state_dict(torch.load(_model_path))
-    model.eval()
-    
-    feature_extract(model, train_loader, valid_loader)
-    
-    # debug
-    # break
+if __name__ == '__main__':
+    with open(input_path + "video2helmets.pkl", "rb") as tf:
+        video2helmets = pickle.load(tf)
+        
+    with open(input_path + "video2frames.pkl", "rb") as tf:
+        video2frames = pickle.load(tf)
+        
+    with open(input_path + f"train_{CFG['num_channels']}-{CFG['step_train']}_dist2_std_sg5folds.pkl", "rb") as tf:
+        train_list = pickle.load(tf)
 
-# %%
+    if DEBUG:
+        for fold in range(5):
+            train_list[fold] = train_list[fold][:100]
+
+    best_loss_list = []
+    best_mcc_list = []
+
+    for fold in range(CFG["n_fold"]):
+        
+        print(f'num_worker = {CFG["num_workers"]}')
+        
+        print(f'#'*15)
+        print(f'### Fold: {fold}')
+        print(f'#'*15)
+        
+        best_loss = np.inf
+        best_mcc = -np.inf
+        
+        seed_everything(CFG['seed'])
+        
+        with wandb.init(project='NFL-contact', group=f'{exp_id.split(".")[0]}', name=f'fold{fold}') as run:
+
+            train_loader, valid_loader = prepare_loaders(fold)
+
+            model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
+
+            optimizer = optim.Adam(model.parameters(), lr=CFG["lr"], weight_decay=CFG["weight_decay"])
+            scheduler = lr_scheduler.CosineAnnealingLR(optimizer,T_max=len(train_loader)*CFG["epochs"], eta_min=1e-6)
+
+            for epoch in range(1, CFG["epochs"] + 1):
+                print()
+                print(f"Epoch {epoch}")
+                train_one_epoch(model, optimizer, scheduler, dataloader=train_loader, epoch=epoch)
+                
+            best_loss_list.append(best_loss)
+            best_mcc_list.append(best_mcc)
+
+    best_loss = np.array(best_loss_list)
+    best_mcc = np.array(best_mcc_list)
+
+    print(best_loss_list)
+    print(best_mcc_list)
+    print(f"mcc : {np.mean(best_mcc)}")
+    print(f"loss : {np.mean(best_loss)}")
 
 
+    with open(input_path + f"train_{CFG['num_channels']}-{CFG['step_pred']}_dist2_std_sg5folds.pkl", "rb") as tf:
+        train_list = pickle.load(tf)
+    
+    if DEBUG:
+        for fold in range(5):
+            train_list[fold] = train_list[fold][:100]
 
+    for fold in range(CFG["n_fold"]):
+        print(f'#'*15)
+        print(f'### Fold: {fold}')
+        print(f'#'*15)
+        
+        train_loader, valid_loader = prepare_loaders(fold)
+
+        model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
+        
+        _model_path = os.path.join(save_dir, f"best_mcc-{fold:02d}.bin")
+        print(_model_path)
+        
+        model.load_state_dict(torch.load(_model_path))
+        model.eval()
+        
+        feature_extract(model, train_loader, valid_loader)
+    
