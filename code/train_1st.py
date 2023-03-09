@@ -40,6 +40,8 @@ from turbojpeg import (TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE, TJFLAG_PROGRESSIVE,
 import wandb
 
 warnings.filterwarnings("ignore")
+jpeg = TurboJPEG()
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -64,16 +66,6 @@ input_path = "./../data/"
 frame_path = "./../data/frames/train/"
 save_dir = "./../model/" + exp_id.split(".")[0]
 os.makedirs(save_dir, exist_ok=True)
-
-def seed_everything(seed):
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
 train_aug = A.Compose([
     A.HorizontalFlip(p=0.5),
@@ -106,9 +98,17 @@ feature_cols = [
     'G_flug',
 ]
 
-jpeg = TurboJPEG()
+def seed_everything(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 seed_everything(CFG['seed'])
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class NFLDataset(Dataset):
     def __init__(self, data, aug=valid_aug, mode='train'):
