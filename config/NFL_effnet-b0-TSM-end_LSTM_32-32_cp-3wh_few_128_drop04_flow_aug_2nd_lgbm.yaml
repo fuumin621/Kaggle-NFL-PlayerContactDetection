@@ -1,0 +1,3 @@
+seed: 42
+lightgbm: True #False is xgboost
+cnn_pred_dir: "NFL_effnet-b0-TSM-end_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug"
