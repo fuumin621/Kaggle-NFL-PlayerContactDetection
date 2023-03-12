@@ -21,5 +21,17 @@ python preprocess_1st.py
 ### train
 ```
 cd ./code
+python train_1st.py [train config_path]
+```
+
+### postprocess
+```
+cd ./code
+python postprocess.py [postprocess config_path]
+```
+
+### script to reproduce the best sub
+```
+cd ./code
 bash train.sh
 ```
