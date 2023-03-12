@@ -1,5 +1,4 @@
 # Kaggle-NFL-PlayerContactDetection
-## NN part
 
 ### Hardware
 Google Cloud Platform
@@ -22,5 +21,5 @@ python preprocess_1st.py
 ### train
 ```
 cd ./code
-bash train_1st.sh
+bash train.sh
 ```
