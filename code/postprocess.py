@@ -140,30 +140,33 @@ if __name__ == '__main__':
             best_score = score
 
     print("single best, {}, {:.4f}".format(best_id,best_score))
-
-    l = 0
-    best_ids = [best_id]
-    while True:
-        print(f"start loop {l}")
-        best_id = None
-        best_score, _, _ = eval_mcc(target, oof_df[best_ids].mean(axis=1).values)
-        for exp_id in model_ids:
-            if exp_id not in best_ids:
-                score, _, _ = eval_mcc(
-                    target, oof_df[best_ids + [exp_id]].mean(axis=1).values
-                )
-                print("{}, score:{:.4f}".format(exp_id, score))
-                if score > best_score:
-                    best_id = exp_id
-                    best_score = score
-        if best_id is not None:
-            best_ids.append(best_id)
-            print("best_id:{}, best_score:{:.4f}".format(best_id, best_score))
-            print("")
-            l += 1
-        else:
-            print("stop")
-            break
+    
+    if CFG['is_select'];
+        l = 0
+        best_ids = [best_id]
+        while True:
+            print(f"start loop {l}")
+            best_id = None
+            best_score, _, _ = eval_mcc(target, oof_df[best_ids].mean(axis=1).values)
+            for exp_id in model_ids:
+                if exp_id not in best_ids:
+                    score, _, _ = eval_mcc(
+                        target, oof_df[best_ids + [exp_id]].mean(axis=1).values
+                    )
+                    print("{}, score:{:.4f}".format(exp_id, score))
+                    if score > best_score:
+                        best_id = exp_id
+                        best_score = score
+            if best_id is not None:
+                best_ids.append(best_id)
+                print("best_id:{}, best_score:{:.4f}".format(best_id, best_score))
+                print("")
+                l += 1
+            else:
+                print("stop")
+                break
+    else:
+        best_ids = model_ids
 
     oof_df["pred"] = oof_df[best_ids].mean(axis=1)
     score, thresh, percent = eval_mcc(target, oof_df["pred"].values)
