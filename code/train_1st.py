@@ -37,7 +37,6 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from turbojpeg import (TJFLAG_FASTDCT, TJFLAG_FASTUPSAMPLE, TJFLAG_PROGRESSIVE,
                        TJPF_GRAY, TJSAMP_GRAY, TurboJPEG)
-import wandb
 
 warnings.filterwarnings("ignore")
 jpeg = TurboJPEG()
@@ -722,7 +721,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, epoch):
 
                 print(f"train loss : {epoch_loss}, valid loss : {valid_loss}, mcc : {valid_mcc}")
                 model.train()
-                run.log({'mcc': valid_mcc, 'valid loss': valid_loss, "train loss": epoch_loss, "lr":current_lr})
 
                 if valid_loss <= best_loss:
                     print(f"Valid Loss Improved ({best_loss:0.4f} ---> {valid_loss:0.4f})")
@@ -743,7 +741,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, epoch):
     valid_loss, valid_mcc = valid_one_epoch(model, dataloader=valid_loader)
 
     print(f"train loss : {epoch_loss}, valid loss : {valid_loss}, mcc : {valid_mcc}")
-    run.log({'mcc': valid_mcc, 'valid loss': valid_loss, "train loss": epoch_loss, "lr":current_lr})
 
     if valid_loss <= best_loss:
         print(f"Valid Loss Improved ({best_loss:0.4f} ---> {valid_loss:0.4f})")
@@ -974,23 +971,21 @@ if __name__ == '__main__':
         best_mcc = -np.inf
         
         seed_everything(CFG['seed'])
-        
-        with wandb.init(project='NFL-contact', group=f'{exp_id.split(".")[0]}', name=f'fold{fold}') as run:
 
-            train_loader, valid_loader = prepare_loaders(fold)
+        train_loader, valid_loader = prepare_loaders(fold)
 
-            model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
+        model = NFLModel(backbone = CFG["backbone"],n_segment=CFG["num_channels"]).to(device)
 
-            optimizer = optim.Adam(model.parameters(), lr=CFG["lr"], weight_decay=CFG["weight_decay"])
-            scheduler = lr_scheduler.CosineAnnealingLR(optimizer,T_max=len(train_loader)*CFG["epochs"], eta_min=1e-6)
+        optimizer = optim.Adam(model.parameters(), lr=CFG["lr"], weight_decay=CFG["weight_decay"])
+        scheduler = lr_scheduler.CosineAnnealingLR(optimizer,T_max=len(train_loader)*CFG["epochs"], eta_min=1e-6)
 
-            for epoch in range(1, CFG["epochs"] + 1):
-                print()
-                print(f"Epoch {epoch}")
-                train_one_epoch(model, optimizer, scheduler, dataloader=train_loader, epoch=epoch)
-                
-            best_loss_list.append(best_loss)
-            best_mcc_list.append(best_mcc)
+        for epoch in range(1, CFG["epochs"] + 1):
+            print()
+            print(f"Epoch {epoch}")
+            train_one_epoch(model, optimizer, scheduler, dataloader=train_loader, epoch=epoch)
+            
+        best_loss_list.append(best_loss)
+        best_mcc_list.append(best_mcc)
 
     best_loss = np.array(best_loss_list)
     best_mcc = np.array(best_mcc_list)
