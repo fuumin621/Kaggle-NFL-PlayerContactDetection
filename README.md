@@ -38,7 +38,7 @@ bash train.sh
 
 ### submit
 Upload the following to kaggle datasets
-* all trained models below ./models
+* all trained models below ./model
 * config/NFL_predict.yaml
 * data/standard_scaler_dist2.pkl
 
