@@ -4,3 +4,4 @@ model_ids: ['NFL_effnet-b0-TSM-end_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug_2nd
             'NFL_resnext50-TSM_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug_2nd_lgbm',
             'NFL_resnext50-TSM_LSTM_64-64_cp-3wh_few_128_drop04_flow_aug_2nd_lgbm',
             'NFL_resnext50-TSM_LSTM_64-64_cp-3wh_few_128_drop04_flow_aug_2nd_xgboost']
+is_selet: False
