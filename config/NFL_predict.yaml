@@ -1,0 +1,27 @@
+img_size: 128
+num_workers: 2
+thresh: 0.9847
+valid_bs: 8
+dist_thresh: 2
+cnn_configs:
+- exp_ids:
+  - NFL_resnext50-TSM_LSTM_64-64_cp-3wh_few_128_drop04_flow_aug
+  - NFL_effnet-b0-TSM-end_LSTM_64-64_cp-3wh_few_128_drop06_flow_aug
+  num_channels: 64
+  steps: 64
+- exp_ids:
+  - NFL_resnext50-TSM_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug
+  - NFL_effnet-b0-TSM-end_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug
+  num_channels: 32
+  steps: 8
+- exp_ids:
+  - NFL_resnext50-TSM_LSTM_16-16_cp-3wh_few_128_drop04_flow_aug
+  num_channels: 16
+  steps: 4
+gbdt_exp_ids:
+- NFL_effnet-b0-TSM-end_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug_2nd_lgbm
+- NFL_effnet-b0-TSM-end_LSTM_64-64_cp-3wh_few_128_drop06_flow_aug_2nd_lgbm
+- NFL_resnext50-TSM_LSTM_16-16_cp-3wh_few_128_drop04_flow_aug_2nd_xgboost
+- NFL_resnext50-TSM_LSTM_32-32_cp-3wh_few_128_drop04_flow_aug_2nd_lgbm
+- NFL_resnext50-TSM_LSTM_64-64_cp-3wh_few_128_drop04_flow_aug_2nd_lgbm
+- NFL_resnext50-TSM_LSTM_64-64_cp-3wh_few_128_drop04_flow_aug_2nd_xgboost
