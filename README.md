@@ -35,3 +35,21 @@ python postprocess.py [postprocess config_path]
 cd ./code
 bash train.sh
 ```
+
+### submit
+Upload the following to kaggle datasets
+* all trained models below ./models
+* config/NFL_predict.yaml
+* data/standard_scaler_dist2.pkl
+
+Here is our dataset for final sub.
+
+https://www.kaggle.com/datasets/yuyuki11235/nfl2023-model
+
+Run this notebook.
+
+https://www.kaggle.com/code/fuumin621/nfl2023-final-submit/
+
+
+
+
