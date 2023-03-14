@@ -105,7 +105,7 @@ https://www.kaggle.com/datasets/yuyuki11235/nfl2023-model
 
 Run this notebook.
 
-https://www.kaggle.com/code/fuumin621/nfl2023-final-submit/
+https://www.kaggle.com/code/nomorevotch/nfl2023-final-submit-5th
 
 
 
