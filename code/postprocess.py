@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     print("single best, {}, {:.4f}".format(best_id,best_score))
     
-    if CFG['is_select'];
+    if CFG['is_select']:
         l = 0
         best_ids = [best_id]
         while True:
