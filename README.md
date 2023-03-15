@@ -76,7 +76,7 @@ python train_2nd.py --config [2nd stage config_path]
 ### Postprocess
 - In the post-processing step, the OOF ensemble score and the optimal threshold for the specified model are calculated.
 - In the config file, you can specify the model(s) to be used for the ensemble.
-- If the list of models is empty, all models will be considered.
+- If the list of models is empty, all models (both 1st and 2nd) will be automatically targeted.
 - If 'is_select' is true, [the algorithm](https://www.kaggle.com/code/cdeotte/forward-selection-oof-ensemble-0-942-private/notebook) will automatically select the model(s) with the highest OOF score.
 
 
